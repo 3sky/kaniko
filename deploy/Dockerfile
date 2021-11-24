@@ -63,7 +63,7 @@ RUN \
   apt install -y ca-certificates && \
   cat /etc/ssl/certs/* > /ca-certificates.crt
 
-FROM scratch
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.5-204
 COPY --from=0 /go/src/github.com/GoogleContainerTools/kaniko/out/executor /kaniko/executor
 COPY --from=0 /usr/local/bin/docker-credential-gcr /kaniko/docker-credential-gcr
 COPY --from=0 /go/src/github.com/awslabs/amazon-ecr-credential-helper/bin/local/docker-credential-ecr-login /kaniko/docker-credential-ecr-login
