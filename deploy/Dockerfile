@@ -63,6 +63,18 @@ RUN \
   apt install -y ca-certificates && \
   cat /etc/ssl/certs/* > /ca-certificates.crt
 
+# build nss_wraper
+
+FROM debian:buster-slim AS nss_wrp
+
+RUN \
+  apt-get update && \
+  apt install git cmake -y && \
+  cd /tmp && \
+  git clone git://git.samba.org/nss_wrapper.git && cd nss_wrapper && \
+  mkdir obj && cd obj && \ 
+  cmake .. && make
+
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.5-204
 COPY --from=0 /go/src/github.com/GoogleContainerTools/kaniko/out/executor /kaniko/executor
 COPY --from=0 /usr/local/bin/docker-credential-gcr /kaniko/docker-credential-gcr
@@ -70,7 +82,9 @@ COPY --from=0 /go/src/github.com/awslabs/amazon-ecr-credential-helper/bin/local/
 COPY --from=0 /go/src/github.com/chrismellard/docker-credential-acr-env/build/docker-credential-acr-env /kaniko/docker-credential-acr
 COPY --from=certs /ca-certificates.crt /kaniko/ssl/certs/
 COPY --from=0 /kaniko/.docker /kaniko/.docker
+COPY --from=nss_wrp /tmp/nss_wrapper/obj/src/libnss_wrapper.so /usr/lib/libnss_wrapper.so
 COPY files/nsswitch.conf /etc/nsswitch.conf
+RUN /bin/microdnf update && /bin/microdnf install gettext
 ENV HOME /root
 ENV USER root
 ENV PATH /usr/local/bin:/kaniko
